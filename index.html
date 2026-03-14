@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lab Management System — College ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1e3a5f;
+    --primary-light: #2a5298;
+    --accent: #0ea5e9;
+    --accent2: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --bg: #f0f4f8;
+    --sidebar-bg: #1e3a5f;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  h1,h2,h3,h4 { font-family: 'Space Grotesk', sans-serif; }
+
+  /* ── Login ── */
+  #login-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; background: linear-gradient(135deg, #1e3a5f 0%, #2a5298 50%, #0ea5e9 100%); }
+  .login-card { background:#fff; border-radius:20px; padding:48px 40px; width:420px; box-shadow:0 25px 60px rgba(0,0,0,0.25); }
+  .login-card .logo { text-align:center; margin-bottom:32px; }
+  .login-card .logo h1 { font-size:22px; color:var(--primary); margin-top:12px; }
+  .login-card .logo p { font-size:13px; color:var(--muted); margin-top:4px; }
+  .form-group { margin-bottom:20px; }
+  .form-group label { display:block; font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:10px;
+    font-size:14px; font-family:'DM Sans',sans-serif; color:var(--text); background:#fff;
+    transition:border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline:none; border-color:var(--accent);
+  }
+  .btn-primary { width:100%; padding:13px; background: linear-gradient(135deg,#1e3a5f,#2a5298); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:opacity .2s; }
+  .btn-primary:hover { opacity:.9; }
+  .btn-sm { padding:8px 16px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .btn-blue { background:#dbeafe; color:#1d4ed8; }
+  .btn-green { background:#dcfce7; color:#16a34a; }
+  .btn-red { background:#fee2e2; color:#dc2626; }
+  .btn-yellow { background:#fef9c3; color:#ca8a04; }
+  .btn-gray { background:#f1f5f9; color:#475569; }
+  .error-msg { background:#fee2e2; color:#dc2626; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; display:none; }
+  .success-msg { background:#dcfce7; color:#16a34a; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; display:none; }
+
+  /* ── App Layout ── */
+  #app { display:none; flex-direction:row; min-height:100vh; }
+  .sidebar { width:256px; background:var(--sidebar-bg); display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100vh; overflow-y:auto; z-index:100; }
+  .sidebar-header { padding:24px 20px; border-bottom:1px solid rgba(255,255,255,.1); }
+  .sidebar-header h2 { color:#fff; font-size:14px; font-weight:700; letter-spacing:.5px; }
+  .sidebar-header p { color:rgba(255,255,255,.5); font-size:11px; margin-top:3px; }
+  .sidebar-nav { flex:1; padding:16px 0; }
+  .nav-section-title { padding:8px 20px; font-size:10px; font-weight:700; color:rgba(255,255,255,.35); letter-spacing:1px; text-transform:uppercase; margin-top:8px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; color:rgba(255,255,255,.75); font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; border-left:3px solid transparent; }
+  .nav-item:hover { background:rgba(255,255,255,.07); color:#fff; }
+  .nav-item.active { background:rgba(255,255,255,.12); color:#fff; border-left-color:var(--accent); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .sidebar-footer { padding:16px 20px; border-top:1px solid rgba(255,255,255,.1); }
+  .user-badge { display:flex; align-items:center; gap:10px; }
+  .user-avatar { width:36px; height:36px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:14px; flex-shrink:0; }
+  .user-info p { color:#fff; font-size:13px; font-weight:600; }
+  .user-info span { color:rgba(255,255,255,.5); font-size:11px; }
+
+  /* ── Main ── */
+  .main-content { margin-left:256px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+  .topbar { background:#fff; padding:0 24px; height:64px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
+  .topbar-title { font-size:20px; font-weight:700; color:var(--primary); }
+  .topbar-actions { display:flex; align-items:center; gap:12px; }
+  .role-badge { padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+  .role-lab-incharge { background:#dbeafe; color:#1d4ed8; }
+  .role-faculty { background:#dcfce7; color:#16a34a; }
+  .role-student { background:#fef3c7; color:#d97706; }
+  .page { padding:24px; display:none; }
+  .page.active { display:block; }
+
+  /* ── Cards ── */
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:16px; margin-bottom:24px; }
+  .kpi-card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.06); border:1px solid var(--border); }
+  .kpi-card .kpi-label { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  .kpi-card .kpi-value { font-size:32px; font-weight:700; color:var(--primary); margin:6px 0 2px; font-family:'Space Grotesk',sans-serif; }
+  .kpi-card .kpi-sub { font-size:12px; color:var(--muted); }
+  .kpi-card .kpi-icon { float:right; margin-top:-42px; font-size:28px; }
+
+  /* ── Charts ── */
+  .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+  .chart-card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.06); border:1px solid var(--border); }
+  .chart-card h3 { font-size:14px; font-weight:600; color:var(--text); margin-bottom:16px; }
+  .chart-card canvas { max-height:220px; }
+
+  /* ── Tables ── */
+  .card { background:#fff; border-radius:12px; border:1px solid var(--border); box-shadow:0 1px 4px rgba(0,0,0,.06); overflow:hidden; margin-bottom:20px; }
+  .card-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .card-header h3 { font-size:15px; font-weight:700; color:var(--text); }
+  .card-body { padding:20px; }
+  table { width:100%; border-collapse:collapse; }
+  th { padding:10px 14px; text-align:left; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; background:#f8fafc; border-bottom:1px solid var(--border); }
+  td { padding:12px 14px; font-size:13px; color:var(--text); border-bottom:1px solid #f1f5f9; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#f8fafc; }
+  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge-green { background:#dcfce7; color:#16a34a; }
+  .badge-yellow { background:#fef9c3; color:#ca8a04; }
+  .badge-red { background:#fee2e2; color:#dc2626; }
+  .badge-blue { background:#dbeafe; color:#1d4ed8; }
+  .badge-gray { background:#f1f5f9; color:#64748b; }
+
+  /* ── Modal ── */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:16px; width:560px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,.2); }
+  .modal-header { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .modal-header h2 { font-size:17px; font-weight:700; }
+  .modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); }
+  .modal-body { padding:24px; }
+  .modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; }
+  .btn-modal-primary { padding:10px 24px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-modal-cancel { padding:10px 24px; background:#f1f5f9; color:var(--text); border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+
+  /* ── Misc ── */
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .section-header h2 { font-size:20px; font-weight:700; color:var(--text); }
+  .btn-add { display:flex; align-items:center; gap:6px; padding:10px 18px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .2s; }
+  .btn-add:hover { opacity:.9; }
+  .priority-high { color:#dc2626; font-weight:700; }
+  .priority-medium { color:#d97706; font-weight:600; }
+  .priority-low { color:#16a34a; font-weight:600; }
+  .toast { position:fixed; bottom:24px; right:24px; background:#1e3a5f; color:#fff; padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; z-index:9999; transform:translateY(80px); opacity:0; transition:all .3s; box-shadow:0 8px 24px rgba(0,0,0,.2); }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .search-bar { padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; width:240px; font-family:'DM Sans',sans-serif; }
+  .search-bar:focus { outline:none; border-color:var(--accent); }
+  .filter-row { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .announcement-card { background:#fff; border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:12px; border-left:4px solid var(--accent); }
+  .announcement-card.high { border-left-color:#ef4444; }
+  .announcement-card.medium { border-left-color:#f59e0b; }
+  .announcement-card.low { border-left-color:#10b981; }
+  .announcement-card h4 { font-size:15px; font-weight:700; margin-bottom:6px; }
+  .announcement-card p { font-size:13px; color:var(--muted); line-height:1.6; }
+  .announcement-meta { display:flex; gap:12px; margin-top:10px; font-size:12px; color:var(--muted); }
+  .empty-state { text-align:center; padding:48px; color:var(--muted); }
+  .empty-state svg { width:48px; height:48px; margin:0 auto 12px; opacity:.3; }
+  .empty-state p { font-size:14px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN ════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="56" height="56" rx="14" fill="#1e3a5f"/>
+        <path d="M14 38V22l14-8 14 8v16l-14 8-14-8z" stroke="white" stroke-width="2" fill="none"/>
+        <circle cx="28" cy="28" r="6" fill="#0ea5e9"/>
+        <path d="M28 14v4M28 38v4M14 28h4M38 28h4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h1>Lab Management System</h1>
+      <p>College ERP — Laboratory Module</p>
+    </div>
+    <div id="login-error" class="error-msg"></div>
+    <div id="login-success" class="success-msg"></div>
+    <div id="login-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="Enter username" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter password" autocomplete="current-password"/>
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div style="text-align:center;margin-top:16px;">
+        <a href="#" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="showForgotPassword()">Forgot password?</a>
+      </div>
+    </div>
+    <div id="forgot-form" style="display:none;">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Enter your registered email to receive a reset link.</p>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="forgot-email" placeholder="your@email.com"/>
+      </div>
+      <button class="btn-primary" onclick="doForgotPassword()">Send Reset Link</button>
+      <div style="text-align:center;margin-top:16px;">
+        <a href="#" style="font-size:13px;color:var(--accent);text-decoration:none;" onclick="showLoginForm()">Back to Login</a>
+      </div>
+    </div>
+    <div style="margin-top:24px;padding:14px;background:#f8fafc;border-radius:8px;font-size:12px;color:var(--muted);">
+      <strong>Demo Credentials:</strong><br/>
+      Admin: <code>admin / admin123</code> &nbsp;|&nbsp;
+      Faculty: <code>faculty / fac123</code> &nbsp;|&nbsp;
+      Student: <code>student / stu123</code>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP ══════════════════════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>⚗️ LAB MANAGEMENT</h2>
+      <p>College ERP Module</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-section-title">Lab Operations</div>
+      <div class="nav-item" onclick="showPage('equipment')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2h-4M9 3v18M9 3h6"/></svg>
+        Equipment Inventory
+      </div>
+      <div class="nav-item" onclick="showPage('schedule')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Lab Schedule
+      </div>
+      <div class="nav-item" onclick="showPage('manuals')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Experiment Manuals
+      </div>
+      <div class="nav-item" onclick="showPage('usage')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Equipment Usage
+      </div>
+      <div class="nav-item" onclick="showPage('maintenance')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Maintenance Records
+      </div>
+      <div class="nav-section-title">Academic</div>
+      <div class="nav-item" onclick="showPage('resources')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        Learning Resources
+      </div>
+      <div class="nav-item" onclick="showPage('submissions')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Submissions
+      </div>
+      <div class="nav-item" onclick="showPage('attendance')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        Lab Attendance
+      </div>
+      <div class="nav-item" onclick="showPage('bookings')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Equipment Booking
+      </div>
+      <div class="nav-section-title">Communication</div>
+      <div class="nav-item" onclick="showPage('announcements')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        Announcements
+      </div>
+      <div class="nav-item" onclick="showPage('reports')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Reports & Analytics
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <p id="sidebar-name">User Name</p>
+          <span id="sidebar-role">Role</span>
+        </div>
+      </div>
+      <button onclick="doLogout()" style="margin-top:12px;width:100%;padding:8px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;cursor:pointer;">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <span id="topbar-role-badge" class="role-badge role-lab-incharge">Lab In-charge</span>
+        <span style="font-size:13px;color:var(--muted);" id="topbar-user">User</span>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>📊 Lab Utilization</h3><canvas id="chart-utilization"></canvas></div>
+        <div class="chart-card"><h3>⚙️ Equipment Condition</h3><canvas id="chart-condition"></canvas></div>
+        <div class="chart-card"><h3>📈 Maintenance Trend</h3><canvas id="chart-maintenance"></canvas></div>
+        <div class="chart-card"><h3>🔬 Usage by Lab</h3><canvas id="chart-usage"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>🔔 Recent Announcements</h3></div>
+        <div class="card-body" id="dashboard-announcements"></div>
+      </div>
+    </div>
+
+    <!-- EQUIPMENT -->
+    <div id="page-equipment" class="page">
+      <div class="section-header">
+        <h2>Equipment Inventory</h2>
+        <button class="btn-add" id="btn-add-equipment" onclick="openModal('modal-equipment')">+ Add Equipment</button>
+      </div>
+      <div class="filter-row">
+        <input class="search-bar" type="text" placeholder="Search equipment..." oninput="filterTable('equipment-table', this.value)"/>
+        <select class="search-bar" style="width:auto;" onchange="filterByCondition(this.value)">
+          <option value="">All Conditions</option>
+          <option value="Good">Good</option>
+          <option value="Fair">Fair</option>
+          <option value="Needs Repair">Needs Repair</option>
+        </select>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="equipment-table">
+          <thead><tr>
+            <th>ID</th><th>Equipment Name</th><th>Lab</th><th>Total</th><th>Available</th><th>Condition</th><th>Last Maintenance</th><th>Next Maintenance</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="equipment-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div id="page-schedule" class="page">
+      <div class="section-header">
+        <h2>Lab Schedule</h2>
+        <button class="btn-add" id="btn-add-schedule" onclick="openModal('modal-schedule')">+ Book Lab</button>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="schedule-table">
+          <thead><tr>
+            <th>ID</th><th>Lab</th><th>Date</th><th>Start</th><th>End</th><th>Faculty</th><th>Batch</th><th>Purpose</th><th>Status</th><th>Action</th>
+          </tr></thead>
+          <tbody id="schedule-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- MANUALS -->
+    <div id="page-manuals" class="page">
+      <div class="section-header">
+        <h2>Experiment Manuals</h2>
+        <button class="btn-add" id="btn-add-manual" onclick="openModal('modal-manual')">+ Add Manual</button>
+      </div>
+      <div class="filter-row">
+        <input class="search-bar" type="text" placeholder="Search manuals..." oninput="filterTable('manuals-table', this.value)"/>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="manuals-table">
+          <thead><tr>
+            <th>ID</th><th>Title</th><th>Subject</th><th>Lab</th><th>Difficulty</th><th>Duration</th><th>Created By</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="manuals-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- USAGE -->
+    <div id="page-usage" class="page">
+      <div class="section-header">
+        <h2>Equipment Usage Tracking</h2>
+        <button class="btn-add" onclick="openModal('modal-usage')">+ Log Usage</button>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="usage-table">
+          <thead><tr>
+            <th>ID</th><th>Equipment</th><th>Lab</th><th>Used By</th><th>Start Time</th><th>End Time</th><th>Purpose</th><th>Qty</th><th>Condition After</th>
+          </tr></thead>
+          <tbody id="usage-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- MAINTENANCE -->
+    <div id="page-maintenance" class="page">
+      <div class="section-header">
+        <h2>Maintenance Records</h2>
+        <button class="btn-add" onclick="openModal('modal-maintenance')">+ Report Issue</button>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="maintenance-table">
+          <thead><tr>
+            <th>ID</th><th>Equipment</th><th>Lab</th><th>Issue</th><th>Priority</th><th>Status</th><th>Reported By</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="maintenance-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- RESOURCES -->
+    <div id="page-resources" class="page">
+      <div class="section-header">
+        <h2>Learning Resources</h2>
+        <button class="btn-add" id="btn-add-resource" onclick="openModal('modal-resource')">+ Add Resource</button>
+      </div>
+      <div class="filter-row">
+        <input class="search-bar" type="text" placeholder="Search resources..." oninput="filterTable('resources-table', this.value)"/>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="resources-table">
+          <thead><tr>
+            <th>ID</th><th>Title</th><th>Type</th><th>Subject</th><th>Lab</th><th>Uploaded By</th><th>Date</th><th>Size</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="resources-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- SUBMISSIONS -->
+    <div id="page-submissions" class="page">
+      <div class="section-header">
+        <h2>Student Experiment Submissions</h2>
+        <button class="btn-add" id="btn-add-submission" onclick="openModal('modal-submission')">+ Submit Report</button>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="submissions-table">
+          <thead><tr>
+            <th>ID</th><th>Student</th><th>Batch</th><th>Experiment</th><th>Submitted</th><th>Status</th><th>Grade</th><th>Comments</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="submissions-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div id="page-attendance" class="page">
+      <div class="section-header">
+        <h2>Lab Attendance</h2>
+        <button class="btn-add" onclick="openModal('modal-attendance')">+ Mark Attendance</button>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="attendance-table">
+          <thead><tr>
+            <th>ID</th><th>Date</th><th>Lab</th><th>Batch</th><th>Faculty</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance %</th>
+          </tr></thead>
+          <tbody id="attendance-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div id="page-bookings" class="page">
+      <div class="section-header">
+        <h2>Equipment Booking</h2>
+        <button class="btn-add" id="btn-add-booking" onclick="openModal('modal-booking')">+ Request Booking</button>
+      </div>
+      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;">
+        <table id="bookings-table">
+          <thead><tr>
+            <th>ID</th><th>Student</th><th>Batch</th><th>Equipment</th><th>Lab</th><th>Date</th><th>Time</th><th>Purpose</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="bookings-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- ANNOUNCEMENTS -->
+    <div id="page-announcements" class="page">
+      <div class="section-header">
+        <h2>Announcements</h2>
+        <button class="btn-add" id="btn-add-announcement" onclick="openModal('modal-announcement')">+ Post Announcement</button>
+      </div>
+      <div id="announcements-list"></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="page-reports" class="page">
+      <div class="section-header"><h2>Reports & Analytics</h2></div>
+      <div class="kpi-grid" id="report-kpi"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>Lab Utilization Report</h3><canvas id="report-chart1"></canvas></div>
+        <div class="chart-card"><h3>Equipment Status Report</h3><canvas id="report-chart2"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>📋 Maintenance Summary</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-sm btn-blue" onclick="exportCSV()">Export CSV</button>
+            <button class="btn-sm btn-green" onclick="exportPrint()">Print Report</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto;">
+          <table>
+            <thead><tr><th>ID</th><th>Equipment</th><th>Lab</th><th>Issue</th><th>Priority</th><th>Status</th><th>Reported</th><th>Resolved</th></tr></thead>
+            <tbody id="report-maintenance-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Equipment Modal -->
+<div class="modal-overlay" id="modal-equipment">
+  <div class="modal">
+    <div class="modal-header"><h2>Add / Edit Equipment</h2><button class="modal-close" onclick="closeModal('modal-equipment')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="eq-id"/>
+      <div class="form-group"><label>Equipment Name *</label><input id="eq-name" placeholder="e.g. Oscilloscope"/></div>
+      <div class="form-group"><label>Lab Name *</label>
+        <select id="eq-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option><option>Chemistry Lab</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Total Quantity *</label><input id="eq-total" type="number" min="0" placeholder="10"/></div>
+        <div class="form-group"><label>Available Quantity</label><input id="eq-available" type="number" min="0" placeholder="10"/></div>
+      </div>
+      <div class="form-group"><label>Condition</label>
+        <select id="eq-condition">
+          <option value="Good">Good</option><option value="Fair">Fair</option><option value="Needs Repair">Needs Repair</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Last Maintenance</label><input id="eq-last-maint" type="date"/></div>
+        <div class="form-group"><label>Next Maintenance</label><input id="eq-next-maint" type="date"/></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="eq-desc" rows="2" placeholder="Brief description..."></textarea></div>
+      <div id="eq-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-equipment')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveEquipment()">Save Equipment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal-overlay" id="modal-schedule">
+  <div class="modal">
+    <div class="modal-header"><h2>Book Lab Session</h2><button class="modal-close" onclick="closeModal('modal-schedule')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Lab *</label>
+        <select id="sch-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date *</label><input id="sch-date" type="date"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Start Time *</label><input id="sch-start" type="time"/></div>
+        <div class="form-group"><label>End Time *</label><input id="sch-end" type="time"/></div>
+      </div>
+      <div class="form-group"><label>Faculty *</label><input id="sch-faculty" placeholder="Faculty name"/></div>
+      <div class="form-group"><label>Batch *</label><input id="sch-batch" placeholder="e.g. CS-2023-A"/></div>
+      <div class="form-group"><label>Purpose</label><input id="sch-purpose" placeholder="e.g. Circuit Analysis Experiment"/></div>
+      <div id="sch-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-schedule')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveSchedule()">Book Lab</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Modal -->
+<div class="modal-overlay" id="modal-manual">
+  <div class="modal">
+    <div class="modal-header"><h2>Add Experiment Manual</h2><button class="modal-close" onclick="closeModal('modal-manual')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Experiment Title *</label><input id="man-title" placeholder="e.g. Ohms Law Verification"/></div>
+      <div class="form-group"><label>Subject *</label><input id="man-subject" placeholder="e.g. Electronics"/></div>
+      <div class="form-group"><label>Lab *</label>
+        <select id="man-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Difficulty</label>
+          <select id="man-difficulty"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+        </div>
+        <div class="form-group"><label>Duration</label><input id="man-duration" placeholder="e.g. 2 hours"/></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="man-desc" rows="3" placeholder="Brief description of the experiment..."></textarea></div>
+      <div class="form-group"><label>Created By</label><input id="man-creator" placeholder="Faculty name"/></div>
+      <div id="man-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-manual')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveManual()">Save Manual</button>
+    </div>
+  </div>
+</div>
+
+<!-- Usage Modal -->
+<div class="modal-overlay" id="modal-usage">
+  <div class="modal">
+    <div class="modal-header"><h2>Log Equipment Usage</h2><button class="modal-close" onclick="closeModal('modal-usage')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Equipment *</label><input id="use-equipment" placeholder="Equipment name"/></div>
+      <div class="form-group"><label>Lab</label>
+        <select id="use-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Used By *</label><input id="use-by" placeholder="Student/Faculty name"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Start Time *</label><input id="use-start" type="datetime-local"/></div>
+        <div class="form-group"><label>End Time</label><input id="use-end" type="datetime-local"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Purpose</label><input id="use-purpose" placeholder="Experiment purpose"/></div>
+        <div class="form-group"><label>Quantity Used</label><input id="use-qty" type="number" min="1" placeholder="1"/></div>
+      </div>
+      <div class="form-group"><label>Condition After Use</label>
+        <select id="use-condition"><option>Good</option><option>Fair</option><option>Needs Repair</option></select>
+      </div>
+      <div id="use-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-usage')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveUsage()">Log Usage</button>
+    </div>
+  </div>
+</div>
+
+<!-- Maintenance Modal -->
+<div class="modal-overlay" id="modal-maintenance">
+  <div class="modal">
+    <div class="modal-header"><h2>Report Maintenance Issue</h2><button class="modal-close" onclick="closeModal('modal-maintenance')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Equipment *</label><input id="maint-equipment" placeholder="Equipment name"/></div>
+      <div class="form-group"><label>Lab</label>
+        <select id="maint-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Issue Description *</label><textarea id="maint-issue" rows="3" placeholder="Describe the issue in detail..."></textarea></div>
+      <div class="form-group"><label>Priority</label>
+        <select id="maint-priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
+      </div>
+      <div class="form-group"><label>Reported By *</label><input id="maint-reporter" placeholder="Your name"/></div>
+      <div id="maint-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-maintenance')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveMaintenance()">Submit Ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resource Modal -->
+<div class="modal-overlay" id="modal-resource">
+  <div class="modal">
+    <div class="modal-header"><h2>Add Learning Resource</h2><button class="modal-close" onclick="closeModal('modal-resource')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Title *</label><input id="res-title" placeholder="Resource title"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Type</label>
+          <select id="res-type"><option>PDF</option><option>Video</option><option>Notes</option><option>Link</option></select>
+        </div>
+        <div class="form-group"><label>Subject *</label><input id="res-subject" placeholder="e.g. Electronics"/></div>
+      </div>
+      <div class="form-group"><label>Lab</label>
+        <select id="res-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Uploaded By</label><input id="res-uploader" placeholder="Faculty name"/></div>
+      <div class="form-group"><label>File Size</label><input id="res-size" placeholder="e.g. 2.4 MB"/></div>
+      <div id="res-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-resource')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveResource()">Add Resource</button>
+    </div>
+  </div>
+</div>
+
+<!-- Submission Modal -->
+<div class="modal-overlay" id="modal-submission">
+  <div class="modal">
+    <div class="modal-header"><h2>Submit Experiment Report</h2><button class="modal-close" onclick="closeModal('modal-submission')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Student Name *</label><input id="sub-student" placeholder="Your name"/></div>
+      <div class="form-group"><label>Batch</label><input id="sub-batch" placeholder="e.g. CS-2023-A"/></div>
+      <div class="form-group"><label>Experiment *</label><input id="sub-experiment" placeholder="Experiment title"/></div>
+      <div id="sub-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-submission')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveSubmission()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grade Submission Modal -->
+<div class="modal-overlay" id="modal-grade">
+  <div class="modal">
+    <div class="modal-header"><h2>Grade Submission</h2><button class="modal-close" onclick="closeModal('modal-grade')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="grade-id"/>
+      <div class="form-group"><label>Status</label>
+        <select id="grade-status"><option value="Reviewed">Reviewed</option><option value="Graded">Graded</option></select>
+      </div>
+      <div class="form-group"><label>Grade</label>
+        <select id="grade-value"><option value="">--Select--</option><option>A+</option><option>A</option><option>B+</option><option>B</option><option>C</option><option>D</option><option>F</option></select>
+      </div>
+      <div class="form-group"><label>Comments</label><textarea id="grade-comments" rows="3" placeholder="Feedback for student..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-grade')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveGrade()">Save Grade</button>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Modal -->
+<div class="modal-overlay" id="modal-attendance">
+  <div class="modal">
+    <div class="modal-header"><h2>Mark Attendance</h2><button class="modal-close" onclick="closeModal('modal-attendance')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Date *</label><input id="att-date" type="date"/></div>
+      <div class="form-group"><label>Lab *</label>
+        <select id="att-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Batch *</label><input id="att-batch" placeholder="e.g. CS-2023-A"/></div>
+      <div class="form-group"><label>Faculty</label><input id="att-faculty" placeholder="Faculty name"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Total</label><input id="att-total" type="number" min="0" placeholder="30"/></div>
+        <div class="form-group"><label>Present</label><input id="att-present" type="number" min="0" placeholder="27"/></div>
+        <div class="form-group"><label>Absent</label><input id="att-absent" type="number" min="0" placeholder="3"/></div>
+      </div>
+      <div id="att-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-attendance')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveAttendance()">Save Attendance</button>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal-overlay" id="modal-booking">
+  <div class="modal">
+    <div class="modal-header"><h2>Request Equipment Booking</h2><button class="modal-close" onclick="closeModal('modal-booking')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Student Name *</label><input id="bk-student" placeholder="Your name"/></div>
+      <div class="form-group"><label>Batch</label><input id="bk-batch" placeholder="e.g. CS-2023-A"/></div>
+      <div class="form-group"><label>Equipment *</label><input id="bk-equipment" placeholder="Equipment name"/></div>
+      <div class="form-group"><label>Lab</label>
+        <select id="bk-lab">
+          <option value="">Select Lab</option>
+          <option>Electronics Lab</option><option>Networking Lab</option><option>Embedded Systems Lab</option>
+          <option>Physics Lab</option><option>Biology Lab</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date *</label><input id="bk-date" type="date"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Start Time</label><input id="bk-start" type="time"/></div>
+        <div class="form-group"><label>End Time</label><input id="bk-end" type="time"/></div>
+      </div>
+      <div class="form-group"><label>Purpose</label><input id="bk-purpose" placeholder="Reason for booking"/></div>
+      <div id="bk-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-booking')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveBooking()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Announcement Modal -->
+<div class="modal-overlay" id="modal-announcement">
+  <div class="modal">
+    <div class="modal-header"><h2>Post Announcement</h2><button class="modal-close" onclick="closeModal('modal-announcement')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Title *</label><input id="ann-title" placeholder="Announcement title"/></div>
+      <div class="form-group"><label>Content *</label><textarea id="ann-content" rows="4" placeholder="Write your announcement..."></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Priority</label>
+          <select id="ann-priority"><option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High</option></select>
+        </div>
+        <div class="form-group"><label>Target Audience</label>
+          <select id="ann-audience"><option>All</option><option>Faculty</option><option>Students</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Posted By</label><input id="ann-poster" placeholder="Your name"/></div>
+      <div id="ann-error" class="error-msg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-announcement')">Cancel</button>
+      <button class="btn-modal-primary" onclick="saveAnnouncement()">Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════ STATE ════════════════════════
+const BASE = 'http://localhost:3002';
+let currentUser = null;
+let charts = {};
+
+// ═══════════════════════ AUTH ════════════════════════
+function showMsg(el, msg, type='error') {
+  const e = document.getElementById(el);
+  e.textContent = msg;
+  e.style.display = 'block';
+  e.className = type === 'error' ? 'error-msg' : 'success-msg';
+}
+function hideMsg(el) { const e = document.getElementById(el); if(e) e.style.display='none'; }
+
+async function doLogin() {
+  hideMsg('login-error');
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+  if (!username || !password) { showMsg('login-error', 'Please enter username and password.'); return; }
+  try {
+    const r = await fetch(`${BASE}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,password}) });
+    const data = await r.json();
+    if (!data.success) { showMsg('login-error', data.message); return; }
+    currentUser = data.data;
+    initApp();
+  } catch(e) { showMsg('login-error', 'Cannot connect to server. Make sure the server is running.'); }
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') doLogin(); });
+
+async function doForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { showMsg('login-error', 'Please enter your email.'); return; }
+  try {
+    const r = await fetch(`${BASE}/forgot-password`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email}) });
+    const data = await r.json();
+    if (data.success) showMsg('login-success', 'Reset token sent! Check console/email.', 'success');
+    else showMsg('login-error', data.message);
+  } catch(e) { showMsg('login-error', 'Server error.'); }
+}
+function showForgotPassword() { document.getElementById('login-form').style.display='none'; document.getElementById('forgot-form').style.display='block'; }
+function showLoginForm() { document.getElementById('login-form').style.display='block'; document.getElementById('forgot-form').style.display='none'; }
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('username').value='';
+  document.getElementById('password').value='';
+  destroyCharts();
+}
+
+// ═══════════════════════ INIT APP ════════════════════════
+function initApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('sidebar-name').textContent = currentUser.name;
+  document.getElementById('sidebar-role').textContent = roleLabel(currentUser.role);
+  document.getElementById('sidebar-avatar').textContent = currentUser.name.charAt(0);
+  document.getElementById('topbar-user').textContent = currentUser.name;
+  const rb = document.getElementById('topbar-role-badge');
+  rb.textContent = roleLabel(currentUser.role);
+  rb.className = 'role-badge role-' + currentUser.role;
+  applyRoleRestrictions();
+  showPage('dashboard');
+}
+
+function roleLabel(r) {
+  return r === 'lab-incharge' ? 'Lab In-charge' : r === 'faculty' ? 'Faculty' : 'Student';
+}
+
+function applyRoleRestrictions() {
+  const role = currentUser.role;
+  // Hide add buttons for students on certain pages
+  if (role === 'student') {
+    safeHide('btn-add-equipment');
+    safeHide('btn-add-schedule');
+    safeHide('btn-add-manual');
+    safeHide('btn-add-resource');
+    safeHide('btn-add-announcement');
+    // Students CAN submit and request bookings
+  }
+  if (role === 'faculty') {
+    safeHide('btn-add-equipment');
+    safeHide('btn-add-announcement');
+  }
+}
+function safeHide(id) { const el = document.getElementById(id); if(el) el.style.display='none'; }
+
+// ═══════════════════════ NAVIGATION ════════════════════════
+const pageTitles = {
+  dashboard:'Dashboard', equipment:'Equipment Inventory', schedule:'Lab Schedule',
+  manuals:'Experiment Manuals', usage:'Equipment Usage', maintenance:'Maintenance Records',
+  resources:'Learning Resources', submissions:'Student Submissions', attendance:'Lab Attendance',
+  bookings:'Equipment Booking', announcements:'Announcements', reports:'Reports & Analytics'
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + name);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => { if(n.textContent.trim().toLowerCase().includes(pageTitles[name]?.toLowerCase().split(' ')[0]?.toLowerCase())) n.classList.add('active'); });
+  document.getElementById('page-title').textContent = pageTitles[name] || name;
+  loadPage(name);
+}
+
+function loadPage(name) {
+  const loaders = {
+    dashboard: loadDashboard, equipment: loadEquipment, schedule: loadSchedule,
+    manuals: loadManuals, usage: loadUsage, maintenance: loadMaintenance,
+    resources: loadResources, submissions: loadSubmissions, attendance: loadAttendance,
+    bookings: loadBookings, announcements: loadAnnouncements, reports: loadReports
+  };
+  if (loaders[name]) loaders[name]();
+}
+
+// ═══════════════════════ API HELPERS ════════════════════════
+async function api(method, url, body=null) {
+  const opts = { method, headers:{'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(BASE + url, opts);
+  return r.json();
+}
+
+// ═══════════════════════ TOAST ════════════════════════
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'error' ? '#dc2626' : '#1e3a5f';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════ MODAL ════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+window.addEventListener('click', e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open'); });
+
+// ═══════════════════════ TABLE FILTER ════════════════════════
+function filterTable(tableId, query) {
+  const q = query.toLowerCase();
+  const rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+  rows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+}
+function filterByCondition(cond) {
+  const rows = document.querySelectorAll('#equipment-table tbody tr');
+  rows.forEach(r => { r.style.display = (!cond || r.textContent.includes(cond)) ? '' : 'none'; });
+}
+
+// ═══════════════════════ CHARTS ════════════════════════
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if(c) c.destroy(); });
+  charts = {};
+}
+
+function makeBarChart(id, labels, data, label, color) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets:[{ label, data, backgroundColor: color || '#2a5298', borderRadius:6 }] },
+    options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true, grid:{color:'#f1f5f9'} }, x:{grid:{display:false}} } }
+  });
+}
+function makePieChart(id, labels, data) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets:[{ data, backgroundColor:['#10b981','#f59e0b','#ef4444'], borderWidth:2 }] },
+    options: { responsive:true, plugins:{ legend:{position:'bottom'} } }
+  });
+}
+function makeLineChart(id, labels, data) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets:[{ label:'Tickets', data, borderColor:'#0ea5e9', backgroundColor:'rgba(14,165,233,0.1)', tension:0.4, fill:true, pointBackgroundColor:'#0ea5e9' }] },
+    options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true, grid:{color:'#f1f5f9'} }, x:{grid:{display:false}} } }
+  });
+}
+
+// ═══════════════════════ DASHBOARD ════════════════════════
+async function loadDashboard() {
+  try {
+    const r = await api('GET', '/api/analytics');
+    if (!r.success) return;
+    const d = r.data;
+    // KPIs
+    const kpiData = [
+      { label:'Total Labs',            value: d.summary.totalLabs,              sub:'Active laboratories',      icon:'🏛️', color:'#dbeafe' },
+      { label:'Total Equipment',       value: d.summary.totalEquipment,         sub:'Items in inventory',       icon:'⚙️', color:'#dcfce7' },
+      { label:'Open Maintenance',      value: d.summary.openMaintenanceTickets, sub:'Pending tickets',          icon:'🔧', color:'#fee2e2' },
+      { label:"Today's Bookings",      value: d.summary.todaysBookings,         sub:'Lab sessions today',       icon:'📅', color:'#fef9c3' },
+      { label:'Needs Repair',          value: d.summary.equipmentNeedsRepair,   sub:'Equipment alerts',         icon:'⚠️', color:'#ffe4e6' },
+      { label:'Available Labs',        value: d.summary.availableLabs,          sub:'Ready for use',            icon:'✅', color:'#d1fae5' }
+    ];
+    document.getElementById('kpi-grid').innerHTML = kpiData.map(k => `
+      <div class="kpi-card" style="background:${k.color}20;border-color:${k.color};">
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-value">${k.value}</div>
+        <div class="kpi-sub">${k.sub}</div>
+        <div class="kpi-icon">${k.icon}</div>
+      </div>`).join('');
+    // Charts
+    makeBarChart('chart-utilization', d.labUtilization.map(l=>l.lab.replace(' Lab','')), d.labUtilization.map(l=>l.sessions), 'Sessions', '#2a5298');
+    makePieChart('chart-condition', ['Good','Fair','Needs Repair'], [d.equipmentCondition.Good, d.equipmentCondition.Fair, d.equipmentCondition.NeedsRepair]);
+    makeLineChart('chart-maintenance', d.maintenanceTrend.map(t=>t.month), d.maintenanceTrend.map(t=>t.count));
+    makeBarChart('chart-usage', d.usageByLab.map(l=>l.lab.replace(' Lab','')), d.usageByLab.map(l=>l.usages), 'Usages', '#10b981');
+    // Announcements
+    const ar = await api('GET', '/api/announcements');
+    if (ar.success) {
+      document.getElementById('dashboard-announcements').innerHTML = ar.data.slice(0,3).map(a => `
+        <div class="announcement-card ${a.priority.toLowerCase()}" style="margin-bottom:10px;">
+          <h4>${a.title}</h4>
+          <p>${a.content.substring(0,120)}...</p>
+          <div class="announcement-meta"><span>📌 ${a.priority}</span><span>👤 ${a.postedBy}</span><span>📅 ${a.date}</span></div>
+        </div>`).join('') || '<p style="color:var(--muted);font-size:13px;">No announcements.</p>';
+    }
+  } catch(e) { console.error('Dashboard load error:', e); }
+}
+
+// ═══════════════════════ EQUIPMENT ════════════════════════
+async function loadEquipment() {
+  const r = await api('GET', '/api/equipment');
+  if (!r.success) return;
+  document.getElementById('equipment-tbody').innerHTML = r.data.map(e => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${e.id}</code></td>
+      <td><strong>${e.name}</strong>${e.description ? `<br><span style="font-size:11px;color:var(--muted);">${e.description}</span>`:''}</td>
+      <td>${e.lab}</td>
+      <td>${e.total}</td>
+      <td>${e.available}</td>
+      <td><span class="badge ${e.condition==='Good'?'badge-green':e.condition==='Fair'?'badge-yellow':'badge-red'}">${e.condition}</span></td>
+      <td>${e.lastMaintenance || '—'}</td>
+      <td>${e.nextMaintenance || '—'}</td>
+      <td>
+        ${currentUser.role!=='student'?`<button class="btn-sm btn-blue" onclick='editEquipment(${JSON.stringify(e)})'>Edit</button>`:'' }
+        ${currentUser.role==='lab-incharge'?`<button class="btn-sm btn-red" onclick="deleteEquipment('${e.id}')">Del</button>`:''}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="9" class="empty-state">No equipment found.</td></tr>';
+}
+function editEquipment(e) {
+  document.getElementById('eq-id').value = e.id;
+  document.getElementById('eq-name').value = e.name;
+  document.getElementById('eq-lab').value = e.lab;
+  document.getElementById('eq-total').value = e.total;
+  document.getElementById('eq-available').value = e.available;
+  document.getElementById('eq-condition').value = e.condition;
+  document.getElementById('eq-last-maint').value = e.lastMaintenance || '';
+  document.getElementById('eq-next-maint').value = e.nextMaintenance || '';
+  document.getElementById('eq-desc').value = e.description || '';
+  openModal('modal-equipment');
+}
+async function saveEquipment() {
+  hideMsg('eq-error');
+  const id = document.getElementById('eq-id').value;
+  const body = {
+    name: document.getElementById('eq-name').value.trim(),
+    lab: document.getElementById('eq-lab').value,
+    total: document.getElementById('eq-total').value,
+    available: document.getElementById('eq-available').value,
+    condition: document.getElementById('eq-condition').value,
+    lastMaintenance: document.getElementById('eq-last-maint').value,
+    nextMaintenance: document.getElementById('eq-next-maint').value,
+    description: document.getElementById('eq-desc').value
+  };
+  if (!body.name || !body.lab || !body.total) { showMsg('eq-error','Name, lab and total quantity are required.'); return; }
+  const url = id ? `/api/equipment/${id}` : '/api/equipment';
+  const method = id ? 'PUT' : 'POST';
+  const r = await api(method, url, body);
+  if (r.success) { closeModal('modal-equipment'); document.getElementById('eq-id').value=''; toast(r.message); loadEquipment(); }
+  else showMsg('eq-error', r.message);
+}
+async function deleteEquipment(id) {
+  if (!confirm('Delete this equipment?')) return;
+  const r = await api('DELETE', `/api/equipment/${id}`);
+  if (r.success) { toast('Equipment deleted.'); loadEquipment(); }
+  else toast(r.message, 'error');
+}
+
+// ═══════════════════════ SCHEDULE ════════════════════════
+async function loadSchedule() {
+  const r = await api('GET', '/api/schedules');
+  if (!r.success) return;
+  document.getElementById('schedule-tbody').innerHTML = r.data.map(s => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${s.id}</code></td>
+      <td>${s.lab}</td><td>${s.date}</td><td>${s.startTime}</td><td>${s.endTime}</td>
+      <td>${s.faculty}</td><td>${s.batch}</td><td>${s.purpose}</td>
+      <td><span class="badge badge-green">${s.status}</span></td>
+      <td>${currentUser.role!=='student'?`<button class="btn-sm btn-red" onclick="deleteSchedule('${s.id}')">Cancel</button>`:''}</td>
+    </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:32px;">No schedules found.</td></tr>';
+}
+async function saveSchedule() {
+  hideMsg('sch-error');
+  const body = {
+    lab: document.getElementById('sch-lab').value,
+    date: document.getElementById('sch-date').value,
+    startTime: document.getElementById('sch-start').value,
+    endTime: document.getElementById('sch-end').value,
+    faculty: document.getElementById('sch-faculty').value.trim(),
+    batch: document.getElementById('sch-batch').value.trim(),
+    purpose: document.getElementById('sch-purpose').value.trim()
+  };
+  if (!body.lab || !body.date || !body.startTime || !body.endTime || !body.faculty || !body.batch) { showMsg('sch-error','All required fields must be filled.'); return; }
+  if (body.startTime >= body.endTime) { showMsg('sch-error','End time must be after start time.'); return; }
+  const r = await api('POST', '/api/schedules', body);
+  if (r.success) { closeModal('modal-schedule'); toast('Lab booked successfully!'); loadSchedule(); }
+  else showMsg('sch-error', r.message);
+}
+async function deleteSchedule(id) {
+  if (!confirm('Cancel this schedule?')) return;
+  const r = await api('DELETE', `/api/schedules/${id}`);
+  if (r.success) { toast('Schedule cancelled.'); loadSchedule(); }
+  else toast(r.message, 'error');
+}
+
+// ═══════════════════════ MANUALS ════════════════════════
+async function loadManuals() {
+  const r = await api('GET', '/api/manuals');
+  if (!r.success) return;
+  document.getElementById('manuals-tbody').innerHTML = r.data.map(m => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${m.id}</code></td>
+      <td><strong>${m.title}</strong></td><td>${m.subject}</td><td>${m.lab}</td>
+      <td><span class="badge ${m.difficulty==='Beginner'?'badge-green':m.difficulty==='Intermediate'?'badge-yellow':'badge-red'}">${m.difficulty}</span></td>
+      <td>${m.duration}</td><td>${m.createdBy}</td><td>${m.date}</td>
+      <td>
+        <button class="btn-sm btn-blue" onclick="alert('Download functionality available when files are uploaded.')">⬇ Download</button>
+        ${currentUser.role!=='student'?`<button class="btn-sm btn-red" onclick="deleteManual('${m.id}')">Del</button>`:''}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">No manuals found.</td></tr>';
+}
+async function saveManual() {
+  hideMsg('man-error');
+  const body = {
+    title: document.getElementById('man-title').value.trim(),
+    subject: document.getElementById('man-subject').value.trim(),
+    lab: document.getElementById('man-lab').value,
+    difficulty: document.getElementById('man-difficulty').value,
+    duration: document.getElementById('man-duration').value.trim(),
+    description: document.getElementById('man-desc').value.trim(),
+    createdBy: document.getElementById('man-creator').value.trim() || currentUser.name
+  };
+  if (!body.title || !body.subject || !body.lab) { showMsg('man-error','Title, subject and lab are required.'); return; }
+  const r = await api('POST', '/api/manuals', body);
+  if (r.success) { closeModal('modal-manual'); toast('Manual added!'); loadManuals(); }
+  else showMsg('man-error', r.message);
+}
+async function deleteManual(id) {
+  if (!confirm('Delete this manual?')) return;
+  const r = await api('DELETE', `/api/manuals/${id}`);
+  if (r.success) { toast('Manual deleted.'); loadManuals(); }
+}
+
+// ═══════════════════════ USAGE ════════════════════════
+async function loadUsage() {
+  const r = await api('GET', '/api/usage');
+  if (!r.success) return;
+  document.getElementById('usage-tbody').innerHTML = r.data.map(u => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${u.id}</code></td>
+      <td>${u.equipment}</td><td>${u.lab}</td><td>${u.usedBy}</td>
+      <td>${u.startTime}</td><td>${u.endTime||'—'}</td><td>${u.purpose}</td><td>${u.quantity}</td>
+      <td><span class="badge ${u.conditionAfter==='Good'?'badge-green':u.conditionAfter==='Fair'?'badge-yellow':'badge-red'}">${u.conditionAfter}</span></td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">No usage logs.</td></tr>';
+}
+async function saveUsage() {
+  hideMsg('use-error');
+  const body = {
+    equipment: document.getElementById('use-equipment').value.trim(),
+    lab: document.getElementById('use-lab').value,
+    usedBy: document.getElementById('use-by').value.trim(),
+    startTime: document.getElementById('use-start').value,
+    endTime: document.getElementById('use-end').value,
+    purpose: document.getElementById('use-purpose').value.trim(),
+    quantity: document.getElementById('use-qty').value,
+    conditionAfter: document.getElementById('use-condition').value
+  };
+  if (!body.equipment || !body.usedBy || !body.startTime) { showMsg('use-error','Equipment, user and start time required.'); return; }
+  const r = await api('POST', '/api/usage', body);
+  if (r.success) { closeModal('modal-usage'); toast('Usage logged!'); loadUsage(); }
+  else showMsg('use-error', r.message);
+}
+
+// ═══════════════════════ MAINTENANCE ════════════════════════
+async function loadMaintenance() {
+  const r = await api('GET', '/api/maintenance');
+  if (!r.success) return;
+  document.getElementById('maintenance-tbody').innerHTML = r.data.map(m => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${m.id}</code></td>
+      <td>${m.equipment}</td><td>${m.lab}</td>
+      <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${m.issue}">${m.issue}</td>
+      <td><span class="priority-${m.priority.toLowerCase()}">${m.priority}</span></td>
+      <td><span class="badge ${m.status==='Open'?'badge-red':m.status==='In-Progress'?'badge-yellow':'badge-green'}">${m.status}</span></td>
+      <td>${m.reportedBy}</td><td>${m.reportedDate}</td>
+      <td>
+        ${currentUser.role!=='student'?`
+        <button class="btn-sm btn-yellow" onclick="updateMaintenanceStatus('${m.id}','In-Progress')">▶</button>
+        <button class="btn-sm btn-green" onclick="updateMaintenanceStatus('${m.id}','Resolved')">✓</button>`:''}</td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">No maintenance tickets.</td></tr>';
+}
+async function saveMaintenance() {
+  hideMsg('maint-error');
+  const body = {
+    equipment: document.getElementById('maint-equipment').value.trim(),
+    lab: document.getElementById('maint-lab').value,
+    issue: document.getElementById('maint-issue').value.trim(),
+    priority: document.getElementById('maint-priority').value,
+    reportedBy: document.getElementById('maint-reporter').value.trim() || currentUser.name
+  };
+  if (!body.equipment || !body.issue) { showMsg('maint-error','Equipment and issue description required.'); return; }
+  const r = await api('POST', '/api/maintenance', body);
+  if (r.success) { closeModal('modal-maintenance'); toast('Maintenance ticket created!'); loadMaintenance(); }
+  else showMsg('maint-error', r.message);
+}
+async function updateMaintenanceStatus(id, status) {
+  const r = await api('PUT', `/api/maintenance/${id}`, {status});
+  if (r.success) { toast(`Ticket marked as ${status}.`); loadMaintenance(); }
+}
+
+// ═══════════════════════ RESOURCES ════════════════════════
+async function loadResources() {
+  const r = await api('GET', '/api/resources');
+  if (!r.success) return;
+  document.getElementById('resources-tbody').innerHTML = r.data.map(res => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${res.id}</code></td>
+      <td><strong>${res.title}</strong></td>
+      <td><span class="badge ${res.type==='PDF'?'badge-blue':res.type==='Video'?'badge-red':'badge-gray'}">${res.type}</span></td>
+      <td>${res.subject}</td><td>${res.lab}</td><td>${res.uploadedBy}</td><td>${res.date}</td><td>${res.size}</td>
+      <td>
+        <button class="btn-sm btn-blue" onclick="alert('Download available when files are uploaded.')">⬇</button>
+        ${currentUser.role!=='student'?`<button class="btn-sm btn-red" onclick="deleteResource('${res.id}')">Del</button>`:''}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">No resources found.</td></tr>';
+}
+async function saveResource() {
+  hideMsg('res-error');
+  const body = {
+    title: document.getElementById('res-title').value.trim(),
+    type: document.getElementById('res-type').value,
+    subject: document.getElementById('res-subject').value.trim(),
+    lab: document.getElementById('res-lab').value,
+    uploadedBy: document.getElementById('res-uploader').value.trim() || currentUser.name,
+    size: document.getElementById('res-size').value.trim()
+  };
+  if (!body.title || !body.subject) { showMsg('res-error','Title and subject are required.'); return; }
+  const r = await api('POST', '/api/resources', body);
+  if (r.success) { closeModal('modal-resource'); toast('Resource added!'); loadResources(); }
+  else showMsg('res-error', r.message);
+}
+async function deleteResource(id) {
+  if (!confirm('Delete this resource?')) return;
+  const r = await api('DELETE', `/api/resources/${id}`);
+  if (r.success) { toast('Resource deleted.'); loadResources(); }
+}
+
+// ═══════════════════════ SUBMISSIONS ════════════════════════
+async function loadSubmissions() {
+  const r = await api('GET', '/api/submissions');
+  if (!r.success) return;
+  document.getElementById('submissions-tbody').innerHTML = r.data.map(s => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${s.id}</code></td>
+      <td>${s.studentName}</td><td>${s.batch}</td><td>${s.experiment}</td><td>${s.submittedDate}</td>
+      <td><span class="badge ${s.status==='Graded'?'badge-green':s.status==='Reviewed'?'badge-blue':'badge-gray'}">${s.status}</span></td>
+      <td>${s.grade || '—'}</td>
+      <td style="max-width:180px;font-size:12px;color:var(--muted);">${s.comments || '—'}</td>
+      <td>${currentUser.role!=='student'?`<button class="btn-sm btn-blue" onclick='openGradeModal("${s.id}")'>Grade</button>`:''}</td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">No submissions.</td></tr>';
+}
+async function saveSubmission() {
+  hideMsg('sub-error');
+  const body = {
+    studentName: document.getElementById('sub-student').value.trim() || currentUser.name,
+    batch: document.getElementById('sub-batch').value.trim(),
+    experiment: document.getElementById('sub-experiment').value.trim()
+  };
+  if (!body.studentName || !body.experiment) { showMsg('sub-error','Student name and experiment required.'); return; }
+  const r = await api('POST', '/api/submissions', body);
+  if (r.success) { closeModal('modal-submission'); toast('Report submitted!'); loadSubmissions(); }
+  else showMsg('sub-error', r.message);
+}
+function openGradeModal(id) { document.getElementById('grade-id').value = id; openModal('modal-grade'); }
+async function saveGrade() {
+  const id = document.getElementById('grade-id').value;
+  const body = {
+    status: document.getElementById('grade-status').value,
+    grade: document.getElementById('grade-value').value,
+    comments: document.getElementById('grade-comments').value
+  };
+  const r = await api('PUT', `/api/submissions/${id}`, body);
+  if (r.success) { closeModal('modal-grade'); toast('Grade saved!'); loadSubmissions(); }
+}
+
+// ═══════════════════════ ATTENDANCE ════════════════════════
+async function loadAttendance() {
+  const r = await api('GET', '/api/attendance');
+  if (!r.success) return;
+  document.getElementById('attendance-tbody').innerHTML = r.data.map(a => {
+    const pct = a.totalStudents ? Math.round(a.present/a.totalStudents*100) : 0;
+    return `<tr>
+      <td><code style="font-size:11px;color:var(--muted);">${a.id}</code></td>
+      <td>${a.date}</td><td>${a.lab}</td><td>${a.batch}</td><td>${a.faculty}</td>
+      <td>${a.totalStudents}</td><td>${a.present}</td><td>${a.absent}</td>
+      <td><span class="badge ${pct>=75?'badge-green':pct>=50?'badge-yellow':'badge-red'}">${pct}%</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">No attendance records.</td></tr>';
+}
+async function saveAttendance() {
+  hideMsg('att-error');
+  const total = parseInt(document.getElementById('att-total').value)||0;
+  const present = parseInt(document.getElementById('att-present').value)||0;
+  const body = {
+    date: document.getElementById('att-date').value,
+    lab: document.getElementById('att-lab').value,
+    batch: document.getElementById('att-batch').value.trim(),
+    faculty: document.getElementById('att-faculty').value.trim() || currentUser.name,
+    totalStudents: total, present, absent: total - present
+  };
+  if (!body.date || !body.lab || !body.batch) { showMsg('att-error','Date, lab and batch required.'); return; }
+  const r = await api('POST', '/api/attendance', body);
+  if (r.success) { closeModal('modal-attendance'); toast('Attendance recorded!'); loadAttendance(); }
+  else showMsg('att-error', r.message);
+}
+
+// ═══════════════════════ BOOKINGS ════════════════════════
+async function loadBookings() {
+  const r = await api('GET', '/api/bookings');
+  if (!r.success) return;
+  document.getElementById('bookings-tbody').innerHTML = r.data.map(b => `
+    <tr>
+      <td><code style="font-size:11px;color:var(--muted);">${b.id}</code></td>
+      <td>${b.studentName}</td><td>${b.batch}</td><td>${b.equipment}</td><td>${b.lab}</td><td>${b.date}</td>
+      <td>${b.startTime}–${b.endTime}</td><td>${b.purpose}</td>
+      <td><span class="badge ${b.status==='Approved'?'badge-green':b.status==='Rejected'?'badge-red':'badge-yellow'}">${b.status}</span></td>
+      <td>
+        ${currentUser.role!=='student' && b.status==='Pending'?`
+        <button class="btn-sm btn-green" onclick="updateBooking('${b.id}','Approved')">✓</button>
+        <button class="btn-sm btn-red" onclick="updateBooking('${b.id}','Rejected')">✗</button>`:''}</td>
+    </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:32px;">No bookings.</td></tr>';
+}
+async function saveBooking() {
+  hideMsg('bk-error');
+  const body = {
+    studentName: document.getElementById('bk-student').value.trim() || currentUser.name,
+    batch: document.getElementById('bk-batch').value.trim(),
+    equipment: document.getElementById('bk-equipment').value.trim(),
+    lab: document.getElementById('bk-lab').value,
+    date: document.getElementById('bk-date').value,
+    startTime: document.getElementById('bk-start').value,
+    endTime: document.getElementById('bk-end').value,
+    purpose: document.getElementById('bk-purpose').value.trim()
+  };
+  if (!body.studentName || !body.equipment || !body.date) { showMsg('bk-error','Name, equipment and date required.'); return; }
+  const r = await api('POST', '/api/bookings', body);
+  if (r.success) { closeModal('modal-booking'); toast('Booking request submitted!'); loadBookings(); }
+  else showMsg('bk-error', r.message);
+}
+async function updateBooking(id, status) {
+  const r = await api('PUT', `/api/bookings/${id}`, {status});
+  if (r.success) { toast(`Booking ${status.toLowerCase()}.`); loadBookings(); }
+}
+
+// ═══════════════════════ ANNOUNCEMENTS ════════════════════════
+async function loadAnnouncements() {
+  const r = await api('GET', '/api/announcements');
+  if (!r.success) return;
+  document.getElementById('announcements-list').innerHTML = r.data.length
+    ? r.data.map(a => `
+      <div class="announcement-card ${a.priority.toLowerCase()}">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h4>${a.title}</h4>
+          ${currentUser.role==='lab-incharge'?`<button class="btn-sm btn-red" onclick="deleteAnnouncement('${a.id}')">Delete</button>`:''}
+        </div>
+        <p style="margin-top:8px;">${a.content}</p>
+        <div class="announcement-meta">
+          <span>📌 ${a.priority} Priority</span>
+          <span>👤 ${a.postedBy}</span>
+          <span>📅 ${a.date}</span>
+          <span>🎯 ${a.targetAudience}</span>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-state"><p>No announcements yet.</p></div>';
+}
+async function saveAnnouncement() {
+  hideMsg('ann-error');
+  const body = {
+    title: document.getElementById('ann-title').value.trim(),
+    content: document.getElementById('ann-content').value.trim(),
+    priority: document.getElementById('ann-priority').value,
+    postedBy: document.getElementById('ann-poster').value.trim() || currentUser.name,
+    targetAudience: document.getElementById('ann-audience').value
+  };
+  if (!body.title || !body.content) { showMsg('ann-error','Title and content required.'); return; }
+  const r = await api('POST', '/api/announcements', body);
+  if (r.success) { closeModal('modal-announcement'); toast('Announcement posted!'); loadAnnouncements(); }
+  else showMsg('ann-error', r.message);
+}
+async function deleteAnnouncement(id) {
+  if (!confirm('Delete this announcement?')) return;
+  const r = await api('DELETE', `/api/announcements/${id}`);
+  if (r.success) { toast('Deleted.'); loadAnnouncements(); }
+}
+
+// ═══════════════════════ REPORTS ════════════════════════
+async function loadReports() {
+  const r = await api('GET', '/api/analytics');
+  if (!r.success) return;
+  const d = r.data;
+  document.getElementById('report-kpi').innerHTML = [
+    { label:'Total Equipment', value: d.summary.totalEquipment, color:'#dbeafe' },
+    { label:'Open Tickets',    value: d.summary.openMaintenanceTickets, color:'#fee2e2' },
+    { label:'Good Condition',  value: d.equipmentCondition.Good, color:'#dcfce7' },
+    { label:'Needs Repair',    value: d.equipmentCondition.NeedsRepair, color:'#ffe4e6' }
+  ].map(k => `<div class="kpi-card" style="background:${k.color};"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div></div>`).join('');
+  makeBarChart('report-chart1', d.labUtilization.map(l=>l.lab.replace(' Lab','')), d.labUtilization.map(l=>l.sessions), 'Sessions', '#1e3a5f');
+  makePieChart('report-chart2', ['Good','Fair','Needs Repair'], [d.equipmentCondition.Good, d.equipmentCondition.Fair, d.equipmentCondition.NeedsRepair]);
+  const mr = await api('GET', '/api/maintenance');
+  if (mr.success) {
+    document.getElementById('report-maintenance-tbody').innerHTML = mr.data.map(m => `
+      <tr>
+        <td>${m.id}</td><td>${m.equipment}</td><td>${m.lab}</td><td>${m.issue}</td>
+        <td><span class="priority-${m.priority.toLowerCase()}">${m.priority}</span></td>
+        <td><span class="badge ${m.status==='Open'?'badge-red':m.status==='In-Progress'?'badge-yellow':'badge-green'}">${m.status}</span></td>
+        <td>${m.reportedDate}</td><td>${m.resolvedDate||'—'}</td>
+      </tr>`).join('');
+  }
+}
+function exportCSV() {
+  const rows = [['ID','Equipment','Lab','Issue','Priority','Status','Reported','Resolved']];
+  document.querySelectorAll('#report-maintenance-tbody tr').forEach(r => {
+    rows.push(Array.from(r.querySelectorAll('td')).map(td => td.textContent.trim()));
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download = 'maintenance_report.csv';
+  a.click();
+  toast('CSV exported!');
+}
+function exportPrint() { window.print(); }
+</script>
+</body>
+</html>
