@@ -1,7 +1,6 @@
-# ╔══════════════════════════════════════════════════════╗
-# ║   LAB MANAGEMENT SYSTEM — Complete Setup Guide      ║
-# ║   College ERP Module | Step-by-Step Instructions    ║
-# ╚══════════════════════════════════════════════════════╝
+#AI-Enhanced Lab Management System
+
+An AI-powered Lab Management System designed to automate and streamline laboratory operations in educational institutions. This system improves efficiency, enhances security, and provides real-time insights using modern technologies and artificial intelligence.
 
 ## TABLE OF CONTENTS
 1. Prerequisites
